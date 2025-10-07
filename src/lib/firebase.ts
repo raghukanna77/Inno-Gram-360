@@ -4,16 +4,21 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyB9cEJ-vsHGV9m0TLMKp5r1rFnHxvIue9M",
-  authDomain: "innogram-360.firebaseapp.com",
-  projectId: "innogram-360",
-  storageBucket: "innogram-360.firebasestorage.app",
-  messagingSenderId: "63133817555",
-  appId: "1:63133817555:web:52aadec76f230d89525226",
-  measurementId: "G-R3KBZGF8MM"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
+
+// Validate configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+  throw new Error('Missing Firebase configuration. Please check your environment variables.');
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -22,8 +27,18 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const analytics = getAnalytics(app);
 
+// Initialize analytics only in production and if supported
+let analytics;
+try {
+  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+    analytics = getAnalytics(app);
+  }
+} catch (error) {
+  console.log('Analytics not available:', error);
+}
+
+export { analytics };
 export default app;
 
 // Types for your application

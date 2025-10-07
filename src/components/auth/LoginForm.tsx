@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -9,7 +8,6 @@ export const LoginForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   const { signIn } = useAuth();
-  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +31,7 @@ export const LoginForm: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            {t('signInToAccount')}
+            Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-indigo-200">
             Smart Adharsh - Digital Governance Platform
@@ -93,7 +91,7 @@ export const LoginForm: React.FC = () => {
               {isLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
-                t('signIn')
+                'Sign In'
               )}
             </button>
           </div>
