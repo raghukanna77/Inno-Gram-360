@@ -1,7 +1,7 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
-import { LoginForm } from './components/auth/LoginForm';
+import { AuthWrapper } from './components/auth/AuthWrapper';
 import { DashboardLayout } from './components/layouts/DashboardLayout';
 
 const AppContent: React.FC = () => {
@@ -18,7 +18,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  return user ? <DashboardLayout /> : <LoginForm />;
+  return user ? <DashboardLayout /> : <AuthWrapper />;
 };
 
 function App() {

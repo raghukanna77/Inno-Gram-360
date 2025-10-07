@@ -35,9 +35,6 @@ node_modules/
 # Production
 /build
 
-# Main config directory
-.main/
-
 # Misc
 .env.local
 .env.development.local

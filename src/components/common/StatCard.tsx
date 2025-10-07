@@ -1,58 +1,56 @@
 import React from 'react';
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple';
   trend?: {
     value: number;
     isPositive: boolean;
   };
-  onClick?: () => void;
+  color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple';
 }
 
-const colorClasses = {
-  blue: 'bg-blue-50 text-blue-600 border-blue-200',
-  green: 'bg-green-50 text-green-600 border-green-200',
-  yellow: 'bg-yellow-50 text-yellow-600 border-yellow-200',
-  red: 'bg-red-50 text-red-600 border-red-200',
-  purple: 'bg-purple-50 text-purple-600 border-purple-200',
-};
-
-export const StatCard: React.FC<StatCardProps> = ({
-  title,
-  value,
-  icon: Icon,
-  color = 'blue',
+export const StatCard: React.FC<StatCardProps> = ({ 
+  title, 
+  value, 
+  icon: Icon, 
   trend,
-  onClick
+  color = 'blue' 
 }) => {
+  const getColorClasses = (color: string) => {
+    switch (color) {
+      case 'green':
+        return 'bg-green-500 text-white';
+      case 'red':
+        return 'bg-red-500 text-white';
+      case 'yellow':
+        return 'bg-yellow-500 text-white';
+      case 'purple':
+        return 'bg-purple-500 text-white';
+      default:
+        return 'bg-blue-500 text-white';
+    }
+  };
+
   return (
-    <div 
-      className={`bg-white p-6 rounded-lg shadow-sm border border-gray-200 ${
-        onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''
-      }`}
-      onClick={onClick}
-    >
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
           {trend && (
-            <div className="mt-2 flex items-center">
-              <span className={`text-sm font-medium ${
-                trend.isPositive ? 'text-green-600' : 'text-red-600'
-              }`}>
+            <div className="flex items-center mt-2">
+              <span className={`text-sm ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
                 {trend.isPositive ? '+' : ''}{trend.value}%
               </span>
               <span className="text-sm text-gray-500 ml-1">vs last month</span>
             </div>
           )}
         </div>
-        <div className={`p-3 rounded-full border ${colorClasses[color]}`}>
-          <Icon className="h-6 w-6" />
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getColorClasses(color)}`}>
+          <Icon size={24} />
         </div>
       </div>
     </div>
