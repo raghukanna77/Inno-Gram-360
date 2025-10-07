@@ -1,86 +1,113 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '../types';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { 
+  User as FirebaseUser,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  updateProfile
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db, AuthUser } from '../lib/firebase';
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  user: AuthUser | null;
+  userProfile: any | null;
   isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, userData: { name: string, role: string }) => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Rajesh Kumar',
-    email: 'gov@example.com',
-    role: 'government',
-    avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: '2',
-    name: 'Priya Sharma',
-    email: 'auth@example.com',
-    role: 'authority',
-    avatar: 'https://images.pexels.com/photos/3758105/pexels-photo-3758105.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: '3',
-    name: 'Arjun Singh',
-    email: 'worker@example.com',
-    role: 'worker',
-    village: 'Rampur',
-    avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400'
-  },
-  {
-    id: '4',
-    name: 'Sunita Devi',
-    email: 'public@example.com',
-    role: 'public',
-    village: 'Rampur',
-    avatar: 'https://images.pexels.com/photos/3756679/pexels-photo-3756679.jpeg?auto=compress&cs=tinysrgb&w=400'
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const authUser: AuthUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName
+        };
+        setUser(authUser);
+
+        // Get user profile from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            setUserProfile(userDoc.data());
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Mock login logic
-    const foundUser = mockUsers.find(u => u.email === email);
-    
-    if (foundUser && password === 'password') {
-      setUser(foundUser);
-      localStorage.setItem('user', JSON.stringify(foundUser));
-      setIsLoading(false);
-      return true;
+  const signIn = async (email: string, password: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.message };
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const signUp = async (email: string, password: string, userData: { name: string, role: string }) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Update display name
+      await updateProfile(user, {
+        displayName: userData.name
+      });
+
+      // Save user profile to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        displayName: userData.name,
+        role: userData.role,
+        createdAt: new Date()
+      });
+
+      return { error: null };
+    } catch (error: any) {
+      return { error: error.message };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const value = {
+    user,
+    userProfile,
+    isLoading,
+    signIn,
+    signUp,
+    signOut,
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
